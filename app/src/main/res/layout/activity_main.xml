@@ -58,8 +58,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout2"
         android:layout_width="wrap_content"
-        android:layout_marginTop="20dp"
         android:layout_height="250dp"
+        android:layout_marginTop="20dp"
         android:foregroundGravity="center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -70,8 +70,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:foregroundGravity="center_vertical"
-            android:src="@drawable/album_cover"
             android:outlineSpotShadowColor="#000"
+            android:src="@drawable/album_cover"
             app:layout_constraintBottom_toBottomOf="@+id/seekBar2"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -116,11 +116,11 @@
 
         <TextView
             android:id="@+id/song_name"
-            android:maxLines="1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="@font/moon_bold"
+            android:maxLines="1"
             android:text="@string/artist_Name"
             android:textAlignment="center"
             android:textColor="#000"
@@ -130,12 +130,12 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
-            android:maxLines="1"
             android:id="@+id/song_artist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="@font/moon_light"
+            android:maxLines="1"
             android:text="@string/song_Name"
             android:textAlignment="center"
             android:textColor="#686868"
@@ -176,6 +176,7 @@
             </LinearLayout>
 
         </LinearLayout>
+
         <LinearLayout
             android:id="@+id/seekBarContainer"
             android:layout_width="match_parent"
@@ -226,8 +227,6 @@
                 android:text="Whole Time" />
 
         </LinearLayout>
-
-
 
 
         <androidx.constraintlayout.widget.ConstraintLayout

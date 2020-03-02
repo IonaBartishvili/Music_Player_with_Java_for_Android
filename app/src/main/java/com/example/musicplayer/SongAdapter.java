@@ -43,7 +43,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
 
         String song_name = song_list.get(position);
         String song_artist = artist_list.get(position);
-        String songPosition = Integer.toString(position);
+        String songPosition = Integer.toString(position + 1);
 
         holder.song_name.setText(song_name);
         holder.song_artist.setText(artist_list.get(position));

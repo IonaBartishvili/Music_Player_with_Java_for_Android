@@ -39,52 +39,38 @@ public class Main2Activity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
+        // Declaring IDs
+        recyclerView = findViewById(R.id.recyclerView);
+
+        // Asking || Checking the Storage Permission
         checkStoragePermission();
 
-        // Import View IDs
-//        ListView listView = findViewById(R.id.listView);
-
-
+        /////////////////// READING MP3 FILES FROM STORAGE ///////////////////
         // Reading Files from Sd Card and creating Hashmap
         ArrayList<HashMap<String, String>> songList = getPlayList("/storage/");
         // Reading FIles from Internal Storage and Creating Hashmap
-        ArrayList<HashMap<String, String>> filesFromInternalStorage = getPlayListFromInternalStorage(Environment.getExternalStorageDirectory().getAbsolutePath());
-//        for (HashMap<String, String> song : filesFromInternalStorage){
-//            songList.add(song);
-//        }
-
+        ArrayList<HashMap<String, String>> filesFromInternalStorage = getPlayList(Environment.getExternalStorageDirectory().getAbsolutePath());
+        for (HashMap<String, String> song : filesFromInternalStorage) {
+            songList.add(song);
+        }
+        /////////////////////////////////////////////////////////////////////
 
         // Creating list for mp3 file paths
         ArrayList<String> songNames = new ArrayList<>();
         ArrayList<String> artist_list = new ArrayList<>();
         if (songList != null) {
             for (int i = 0; i < songList.size(); i++) {
-//                // Getting the song Title and Path from the Hashmap
-//                String fileName = songList.get(i).get("file_name");
-//                String filePath = songList.get(i).get("file_path");
-//
-//                Uri uri = Uri.parse(fileName);
-//                // Creating MediameatadataRetriever in order to get Artist with file Path
-//                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-//                mediaMetadataRetriever.setDataSource(String.valueOf(uri));
-//
-//                // Adding items in Arraylist in order to pass the data through Intent
-//                songNames.add(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
-//                String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-//                songNames.add(fileName);
-//                if (artist == "" || artist == " " || artist == null || artist == "<uknown>"){
-//                    artist_list.add("Unkown Artist");
-//                } else {
-//                    artist_list.add(artist);
-//                }
-                String fileName = songList.get(i).get("file_name");
-                songNames.add(fileName);
-
+                // Getting the File path for song from Hashmap
                 String filePath = songList.get(i).get("file_path");
+                // Creating MediaMetadataRetriever instance in order to access Title and Artist
                 MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
                 mediaMetadataRetriever.setDataSource(filePath);
                 String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                if (artist == ""){
+                String song_name = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+
+                // adding resources to Lists.
+                songNames.add(song_name);
+                if (artist == "" || artist == " " || artist == null || artist == "<Unknown>") {
                     artist_list.add("Unkown Artist");
                 } else {
                     artist_list.add(artist);
@@ -92,28 +78,8 @@ public class Main2Activity extends AppCompatActivity {
             }
         }
 
-
-//        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-//                getApplicationContext(),
-//                R.layout.song_layout,
-//                R.id.adapterTextView,
-//                songNames
-//        );
-//        listView.setAdapter(adapter);
-//
-//
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                passSongToIntent(position, songList);
-//            }
-//        });
-
         ///////////// Recyvler View ///////////////
-        recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-
-//        songAdapter = new SongAdapter(this, getSongList());
         songAdapter = new SongAdapter(this, songNames, artist_list, new onSongItemClickListener() {
             @Override
             public void onItemClickListener(int position) {
@@ -121,46 +87,13 @@ public class Main2Activity extends AppCompatActivity {
             }
         });
         recyclerView.setAdapter(songAdapter);
-
-
-
         ///////////////////////////////////////////
 
     }
 
-    private ArrayList<HashMap<String, String>> getPlayListFromInternalStorage(String absolutePath) {
-        ArrayList<HashMap<String, String>> songList = new ArrayList<>();
-
-        // SongCurse
-        ContentResolver contentResolver = getContentResolver();
-        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Cursor songCursor = contentResolver.query(uri, null, null, null, null);
-
-        HashMap<String, String> song = new HashMap<>();
-
-        if (songCursor != null && songCursor.moveToFirst()){
-            int songTitle = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
-            int songArtist = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
-
-            do {
-                String currentTitle = songCursor.getString(songTitle);
-                String currentArtist = songCursor.getString(songArtist);
-
-                song.put("song_name", currentTitle);
-                song.put("song_artist", currentArtist);
-
-                songList.add(song);
-            } while (songCursor.moveToNext());
-        }
-
-
-        return songList;
-
-    }
-
-    void checkStoragePermission(){
-        if (ContextCompat.checkSelfPermission(Main2Activity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            if (ActivityCompat.shouldShowRequestPermissionRationale(Main2Activity.this, Manifest.permission.READ_EXTERNAL_STORAGE)){
+    void checkStoragePermission() {
+        if (ContextCompat.checkSelfPermission(Main2Activity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(Main2Activity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 ActivityCompat.requestPermissions(Main2Activity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
             } else {
                 ActivityCompat.requestPermissions(Main2Activity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
@@ -171,7 +104,7 @@ public class Main2Activity extends AppCompatActivity {
     }
 
 
-    void passSongToIntent(int position, ArrayList<HashMap<String, String>> songList){
+    void passSongToIntent(int position, ArrayList<HashMap<String, String>> songList) {
 
         Intent goToSongActivity = new Intent(getApplicationContext(), MainActivity.class)
                 .putExtra("position", position)
