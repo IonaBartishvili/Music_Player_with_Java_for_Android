@@ -20,11 +20,13 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
     private ArrayList<String> song_list;
     private ArrayList<String> artist_list;
     private String songPosition;
+    public onSongItemClickListener onSongItemClickListener;
 
-    SongAdapter(Context context, ArrayList<String> song_list, ArrayList<String> artist_list){
+    SongAdapter(Context context, ArrayList<String> song_list, ArrayList<String> artist_list, onSongItemClickListener onSongItemClickListener){
         this.layoutInflater = LayoutInflater.from(context);
         this.song_list = song_list;
         this.artist_list = artist_list;
+        this.onSongItemClickListener = onSongItemClickListener;
     }
 
 
@@ -46,6 +48,13 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
         holder.song_name.setText(song_name);
         holder.song_artist.setText(artist_list.get(position));
         holder.songPosition.setText(songPosition);
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onSongItemClickListener.onItemClickListener(position);
+            }
+        });
 
     }
 
