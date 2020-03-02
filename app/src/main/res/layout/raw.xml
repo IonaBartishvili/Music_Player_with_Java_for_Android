@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="4dp"
+    android:layout_margin="10dp"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:gravity="start"
+        android:layout_width="match_parent"
+        android:layout_margin="10dp"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/songRaw_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:fontFamily="@font/moon_bold"
+            android:textSize="30sp"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_toRightOf="@+id/songRaw_position"
+            android:layout_toEndOf="@+id/songRaw_position"
+            android:layout_marginStart="25dp">
+
+            <TextView
+                android:id="@+id/songRaw_name"
+                android:maxLines="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Song name"
+                android:fontFamily="@font/moon_bold"
+                android:textSize="13sp" />
+
+            <TextView
+                android:maxLines="1"
+                android:id="@+id/songRaw_artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Artist"
+                android:fontFamily="@font/moon_light"
+                android:textSize="13sp"
+                />
+
+
+        </LinearLayout>
+
+
+
+
+    </RelativeLayout>
+
+
+
+</androidx.cardview.widget.CardView>
