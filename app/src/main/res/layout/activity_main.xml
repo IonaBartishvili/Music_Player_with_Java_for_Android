@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#D3D3D3"
+    android:id="@+id/parent"
+    android:background="#FFF"
     android:orientation="vertical"
     android:weightSum="4"
     tools:context=".MainActivity">
@@ -55,6 +56,65 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+<!--    <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--        android:id="@+id/constraintLayout2"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="250dp"-->
+<!--        android:layout_marginTop="20dp"-->
+<!--        android:foregroundGravity="center_vertical"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">-->
+
+
+<!--        <de.hdodenhof.circleimageview.CircleImageView-->
+<!--            android:id="@+id/album_cover"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:foregroundGravity="center_vertical"-->
+<!--            android:outlineSpotShadowColor="#000"-->
+<!--            android:src="@drawable/album_cover"-->
+<!--            app:layout_constraintBottom_toBottomOf="@+id/seekBar2"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent" />-->
+
+<!--        &lt;!&ndash;    app:csb_progress="300"-->
+<!--                app:csb_thumbDrawable="@drawable/ic_circle_seekbar"-->
+<!--                app:csb_thumbSize="36dp" &ndash;&gt;-->
+<!--        <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:padding="10dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent">-->
+
+<!--            <hiennguyen.me.circleseekbar.CircleSeekBar-->
+<!--                android:id="@+id/seekBar2"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:padding="15dp"-->
+<!--                app:csb_arcColor="#D3D3D3"-->
+<!--                app:csb_arcWidth="5dp"-->
+<!--                app:csb_max="100"-->
+<!--                app:csb_min="0"-->
+<!--                app:csb_progress="0"-->
+<!--                app:csb_progressColor="#EC1B23"-->
+<!--                app:csb_progressWidth="5dp"-->
+<!--                app:csb_step="50"-->
+<!--                app:csb_textSize="0sp"-->
+<!--                app:csb_thumbSize="0dp"-->
+<!--                app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="parent" />-->
+
+<!--        </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--        -->
+<!--    </androidx.constraintlayout.widget.ConstraintLayout>-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout2"
         android:layout_width="wrap_content"
@@ -65,11 +125,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
 
-
         <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/album_cover"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:foregroundGravity="center_vertical"
+            android:layout_gravity="center_vertical"
             android:outlineSpotShadowColor="#000"
             android:src="@drawable/album_cover"
             app:layout_constraintBottom_toBottomOf="@+id/seekBar2"
@@ -77,23 +138,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!--    app:csb_progress="300"
-                app:csb_thumbDrawable="@drawable/ic_circle_seekbar"
-                app:csb_thumbSize="36dp" -->
-
-
         <hiennguyen.me.circleseekbar.CircleSeekBar
             android:id="@+id/seekBar2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="15dp"
-            app:csb_arcColor="#D3D3D3"
-            app:csb_arcWidth="5dp"
+            android:padding="25dp"
+            app:csb_arcColor="#FFF"
+            app:csb_arcWidth="4dp"
             app:csb_max="100"
             app:csb_min="0"
             app:csb_progress="0"
             app:csb_progressColor="#EC1B23"
-            app:csb_progressWidth="5dp"
+            app:csb_progressWidth="0dp"
             app:csb_step="50"
             app:csb_textSize="0sp"
             app:csb_thumbSize="0dp"
@@ -101,6 +157,16 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/album_disk_inner_circle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -163,6 +229,7 @@
                     android:background="@drawable/ic_repeat_button" />
 
                 <Button
+                    android:id="@+id/favourite"
                     android:layout_width="30dp"
                     android:layout_height="25dp"
                     android:layout_marginStart="50dp"
@@ -251,19 +318,30 @@
                     android:id="@+id/previous_btn"
                     android:layout_width="35dp"
                     android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
                     android:layout_marginEnd="50dp"
                     android:background="@drawable/ic_previous_button" />
 
-                <Button
-                    android:id="@+id/pla_btn"
+
+                <LinearLayout
+                    android:id="@+id/play_button_background"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:background="@drawable/ic_play_button" />
+                    android:background="@drawable/test2">
+
+                    <Button
+                        android:id="@+id/pla_btn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/ic_play_button" />
+
+                </LinearLayout>
 
                 <Button
                     android:id="@+id/next_btn"
                     android:layout_width="35dp"
                     android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
                     android:layout_marginStart="50dp"
                     android:background="@drawable/ic_next_button" />
 

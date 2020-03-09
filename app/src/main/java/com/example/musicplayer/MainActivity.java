@@ -1,14 +1,27 @@
 package com.example.musicplayer;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+import androidx.palette.graphics.Palette;
+import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -17,9 +30,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import org.w3c.dom.Text;
 
@@ -27,6 +44,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 import static com.example.musicplayer.App.CHANNEL_ID;
 
@@ -47,6 +66,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView song_artist;
     private int position;
     private NotificationManagerCompat notificationManager;
+    private CircleImageView albumCover;
+    private int vibrantSwatch;
+    private LinearLayout play_button_background;
+    private Button favourite;
+    private ConstraintLayout parent;
 
 
     @Override
@@ -64,6 +88,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         duration_whole = findViewById(R.id.duration_whole);
         song_name = findViewById(R.id.song_name);
         song_artist = findViewById(R.id.song_artist);
+        albumCover = findViewById(R.id.album_cover);
+        play_button_background = findViewById(R.id.play_button_background);
+        favourite = findViewById(R.id.favourite);
+        parent = findViewById(R.id.parent);
+
 
 
         // Geting position from Intent
@@ -93,6 +122,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String artist;
         mediaMetadataRetriever.setDataSource(path);
         artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+
+        byte[] data = mediaMetadataRetriever.getEmbeddedPicture();
+
+        if (data != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            albumCover.setImageBitmap(bitmap);
+        } else {
+            albumCover.setImageResource(R.drawable.album_cover);
+        }
+
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+            @Override
+            public void onGenerated(@Nullable Palette palette) {
+                vibrantSwatch = palette.getDominantSwatch().getRgb();
+
+
+                play_button_background.getBackground().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
+//                seekBar.setBackgroundColor(vibrantSwatch);
+//                seekBar.setOutlineSpotShadowColor(vibrantSwatch);
+                seekBar.getProgressDrawable().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
+                seekBar.getThumb().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
+
+            }
+
+        });
+
+
+        //Customize the SnackBar for Later Use
+        Snackbar snackbar = Snackbar.make(parent, "", Snackbar.LENGTH_LONG);
+        View snackBarView = snackbar.getView();
+        snackBarView.setBackgroundColor(Color.RED);
+
+        favourite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                favourite.setBackgroundResource(R.drawable.ic_favourite_button_hover);
+                snackBarView.setBackgroundColor(vibrantSwatch);
+                snackbar.setText("This Song is added to favourites").show();
+
+
+
+            }
+        });
 
 
         // Converting Path to URI
