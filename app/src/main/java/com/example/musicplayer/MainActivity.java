@@ -1,10 +1,18 @@
 package com.example.musicplayer;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -19,6 +27,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
+
+import static com.example.musicplayer.App.CHANNEL_ID;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -35,12 +46,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView song_name;
     private TextView song_artist;
     private int position;
+    private NotificationManagerCompat notificationManager;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         // IDs
         seekBar = findViewById(R.id.seekBar);
@@ -51,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         duration_whole = findViewById(R.id.duration_whole);
         song_name = findViewById(R.id.song_name);
         song_artist = findViewById(R.id.song_artist);
-
 
 
         // Geting position from Intent
@@ -71,13 +83,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Playing the Previos Track
         playPrevTrack(songList);
-
-
-
-
     }
 
-    void initMusicPlayer(int position, ArrayList<HashMap<String, String>> songList){
+    void initMusicPlayer(int position, ArrayList<HashMap<String, String>> songList) {
         // Creating Metadata recourses to get Artist name
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         String path = songList.get(position).get("file_path");
@@ -103,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         // Setting the Mediaplayer Listener
-        mediaPlayer_setOnPreparedLisntener();
+        mediaPlayer_setOnPreparedLisntener(songList);
 
         // Seekbar touch
         seekBar_setOnSeekBarChangeListener();
@@ -113,11 +121,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onCompletion(MediaPlayer mp) {
                 playNextTrack(songList);
-            }});
+            }
+        });
+
+        if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
+            playNextTrack(songList);
+        }
+        ;
 
     }
 
-    void playNextTrack(ArrayList<HashMap<String, String>> songList){
+    void playNextTrack(ArrayList<HashMap<String, String>> songList) {
         play_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -132,14 +146,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    void playPrevTrack(ArrayList<HashMap<String, String>> songList){
+    void playPrevTrack(ArrayList<HashMap<String, String>> songList) {
         play_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (position <= 0) {
                     position = songList.size();
                 } else {
-                    position --;
+                    position--;
                 }
 
                 initMusicPlayer(position, songList);
@@ -147,17 +161,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    void mediaPlayer_setOnPreparedLisntener() {
+    void mediaPlayer_setOnPreparedLisntener(ArrayList<HashMap<String, String>> songList) {
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 seekBar.setMax(mp.getDuration());
                 mediaPlayer.start();
+                createMusicNotification();
                 changeSeekbar();
                 play_btn.setBackgroundResource(R.drawable.ic_stop_button);
                 duration_whole.setText(createTimeLabel(mediaPlayer.getDuration()));
             }
         });
+    }
+
+    private void createMusicNotification() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            NotificationChannel channel = new NotificationChannel(CreateNotification.CHANNEL_ID, "KOD Dev", NotificationManager.IMPORTANCE_HIGH);
+//            notificationManager = getSystemService(NotificationManager.class);
+//            if (notificationManager != null){
+//                notificationManager.createNotificationChannel(channel);
+//            }
+//        }
+        notificationManager = NotificationManagerCompat.from(this);
+
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.album_cover)
+                .setContentTitle(song_name.getText().toString())
+                .setContentText(song_artist.getText().toString())
+                .setOngoing(true)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setContentIntent(contentIntent)
+                .build();
+
+        notificationManager.notify(1, notification);
     }
 
     void seekBar_setOnSeekBarChangeListener() {
@@ -233,15 +274,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return arrayList;
     }
 
+
+    public void onClick(ArrayList<HashMap<String, String>> songList) {
+
+    }
+
     @Override
     public void onClick(View v) {
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
+            createMusicNotification();
+            // Creating the Notification Panel
             changeSeekbar();
             play_btn.setBackgroundResource(R.drawable.ic_stop_button);
         } else {
             mediaPlayer.pause();
             play_btn.setBackgroundResource(R.drawable.ic_play_button);
+            notificationManager.cancel(1);
         }
     }
 }
