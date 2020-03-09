@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         parent = findViewById(R.id.parent);
 
 
-
         // Geting position from Intent
         Bundle bundle = getIntent().getExtras();
         position = bundle.getInt("position");
@@ -162,7 +161,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 favourite.setBackgroundResource(R.drawable.ic_favourite_button_hover);
                 snackBarView.setBackgroundColor(vibrantSwatch);
                 snackbar.setText("This Song is added to favourites").show();
-
 
 
             }
