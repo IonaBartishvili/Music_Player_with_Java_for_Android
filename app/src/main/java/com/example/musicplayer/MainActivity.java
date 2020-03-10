@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button favourite;
     private ConstraintLayout parent;
 
+    private boolean SHUFFLE = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,8 +119,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         // Customize the SnackBar for Later Use
-        Snackbar snackbar = Snackbar.make(parent, "", Snackbar.LENGTH_LONG);
+        Snackbar snackbar = Snackbar.make(parent, "", Snackbar.LENGTH_SHORT);
         View snackBarView = snackbar.getView();
+        snackBarView.animate();
 
         // Getting and Setting the Vibrant Color
         setVibrantColorOnViews(albumArt, snackBarView);
@@ -127,9 +130,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         favourite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                favourite.setBackgroundResource(R.drawable.ic_favourite_button_hover);
-                snackBarView.setBackgroundColor(dominantColor);
-                snackbar.setText("This Song is added to favourites").show();
+                if (!SHUFFLE){
+                    favourite.setBackgroundResource(R.drawable.ic_favourite_button_hover);
+                    snackbar.setText("This Song is added to favourites").show();
+                    SHUFFLE = true;
+                } else {
+                    favourite.setBackgroundResource(R.drawable.ic_favourite_button);
+                    snackbar.setText("This Song is removed from favourites").show();
+                    SHUFFLE = false;
+                }
 
 
             }
