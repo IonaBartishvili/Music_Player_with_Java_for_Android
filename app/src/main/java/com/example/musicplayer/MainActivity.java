@@ -1,46 +1,38 @@
 package com.example.musicplayer;
 
-import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.palette.graphics.Palette;
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
-
-import org.w3c.dom.Text;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -67,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int position;
     private NotificationManagerCompat notificationManager;
     private CircleImageView albumCover;
-    private int vibrantSwatch;
+    private int dominantColor;
     private LinearLayout play_button_background;
     private Button favourite;
     private ConstraintLayout parent;
@@ -97,69 +89,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Geting position from Intent
         Bundle bundle = getIntent().getExtras();
         position = bundle.getInt("position");
-        // Recieving the songs List from Intent
-        ArrayList<HashMap<String, String>> songList = (ArrayList<HashMap<String, String>>) getIntent().getSerializableExtra("songList");
+
+        // ----------------------------------------------- //\
+        ArrayList<SongModel> songModelArrayList = retrieveDataFromSharedPreferences();
 
         // Running Entire Music player Logic. Giving the Song list and the position of the song
-        initMusicPlayer(position, songList);
+        initMusicPlayer(position, songModelArrayList);
 
         // Play and Pause Click Listener
         play_btn.setOnClickListener(this);
 
         // Playing the Next Track
-        playNextTrack(songList);
+        playNextTrack(songModelArrayList);
 
         // Playing the Previos Track
-        playPrevTrack(songList);
+        playPrevTrack(songModelArrayList);
     }
 
-    void initMusicPlayer(int position, ArrayList<HashMap<String, String>> songList) {
+    void initMusicPlayer(int position, ArrayList<SongModel> songList) {
         // Creating Metadata recourses to get Artist name
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        String path = songList.get(position).get("file_path");
-        String name = songList.get(position).get("file_name");
-        String artist;
-        mediaMetadataRetriever.setDataSource(path);
-        artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-
-        byte[] data = mediaMetadataRetriever.getEmbeddedPicture();
-
-        if (data != null) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            albumCover.setImageBitmap(bitmap);
-        } else {
-            albumCover.setImageResource(R.drawable.album_cover);
-        }
-
-        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-
-        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(@Nullable Palette palette) {
-                vibrantSwatch = palette.getDominantSwatch().getRgb();
+        SongModel song = songList.get(position);
+        String path = song.getPath();
+        String title = song.getTitle();
+        String artist = song.getArtist();
+        Bitmap albumArt = song.getAlbumCover();
+        albumCover.setImageBitmap(albumArt);
 
 
-                play_button_background.getBackground().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
-//                seekBar.setBackgroundColor(vibrantSwatch);
-//                seekBar.setOutlineSpotShadowColor(vibrantSwatch);
-                seekBar.getProgressDrawable().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
-                seekBar.getThumb().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
-
-            }
-
-        });
-
-
-        //Customize the SnackBar for Later Use
+        // Customize the SnackBar for Later Use
         Snackbar snackbar = Snackbar.make(parent, "", Snackbar.LENGTH_LONG);
         View snackBarView = snackbar.getView();
         snackBarView.setBackgroundColor(Color.RED);
+
+        // Getting and Setting the Vibrant Color
+        setVibrantColorOnViews(albumArt);
+
 
         favourite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 favourite.setBackgroundResource(R.drawable.ic_favourite_button_hover);
-                snackBarView.setBackgroundColor(vibrantSwatch);
+                snackBarView.setBackgroundColor(dominantColor);
                 snackbar.setText("This Song is added to favourites").show();
 
 
@@ -178,32 +148,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         // Setting the Metadata to XML views
-        song_name.setText(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+        song_name.setText(title);
         song_artist.setText(artist);
 
 
         // Setting the Mediaplayer Listener
-        mediaPlayer_setOnPreparedLisntener(songList);
+        mediaPlayer_setOnPreparedLisntener();
 
         // Seekbar touch
         seekBar_setOnSeekBarChangeListener();
 
         // Playing the Next Track when current is over
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                playNextTrack(songList);
-            }
-        });
-
-        if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
-            playNextTrack(songList);
-        }
-        ;
 
     }
 
-    void playNextTrack(ArrayList<HashMap<String, String>> songList) {
+    private void setVibrantColorOnViews(Bitmap albumArt) {
+        Palette.from(albumArt).generate(new Palette.PaletteAsyncListener() {
+            @Override
+            public void onGenerated(@Nullable Palette palette) {
+                int vibrantSwatch = palette.getDominantSwatch().getRgb();
+
+                play_button_background.getBackground().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
+                seekBar.getProgressDrawable().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
+                seekBar.getThumb().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
+
+            }
+        });
+    }
+
+    void playNextTrack(ArrayList<SongModel> songList) {
         play_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -218,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    void playPrevTrack(ArrayList<HashMap<String, String>> songList) {
+    void playPrevTrack(ArrayList<SongModel> songList) {
         play_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -233,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    void mediaPlayer_setOnPreparedLisntener(ArrayList<HashMap<String, String>> songList) {
+    void mediaPlayer_setOnPreparedLisntener() {
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
@@ -328,29 +301,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private ArrayList<File> readSongs(File[] root) {
-        ArrayList<File> arrayList = new ArrayList<>();
-
-        for (File file : root) {
-            if (file.isDirectory()) {
-                arrayList.addAll(readSongs(root));
-            } else {
-                if (file.getName().endsWith(".mp3")) {
-                    arrayList.add(file);
-                }
-
-            }
-        }
-
-
-        return arrayList;
-    }
-
-
-    public void onClick(ArrayList<HashMap<String, String>> songList) {
-
-    }
-
     @Override
     public void onClick(View v) {
         if (!mediaPlayer.isPlaying()) {
@@ -364,6 +314,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             play_btn.setBackgroundResource(R.drawable.ic_play_button);
             notificationManager.cancel(1);
         }
+    }
+
+    public ArrayList<SongModel> retrieveDataFromSharedPreferences(){
+        SharedPreferences sharedPreferences = getSharedPreferences("Shared Preferences", MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString("SongList", null);
+        Type type = new TypeToken<ArrayList<SongModel>>(){}.getType();
+        ArrayList<SongModel> songList = gson.fromJson(json, type);
+        return songList;
+
     }
 }
 

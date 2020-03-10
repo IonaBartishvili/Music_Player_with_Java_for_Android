@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
@@ -25,6 +26,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +36,7 @@ public class Main2Activity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private SongAdapter songAdapter;
     private static final int MY_PERMISSION_REQUEST = 1;
+    private TextView textView3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,54 +45,78 @@ public class Main2Activity extends AppCompatActivity {
 
         // Declaring IDs
         recyclerView = findViewById(R.id.recyclerView);
+        textView3 = findViewById(R.id.textView3);
 
         // Asking || Checking the Storage Permission
         checkStoragePermission();
 
-        /////////////////// READING MP3 FILES FROM STORAGE ///////////////////
-        // Reading Files from Sd Card and creating Hashmap
-        ArrayList<HashMap<String, String>> songList = getPlayList("/storage/");
-        // Reading FIles from Internal Storage and Creating Hashmap
-        ArrayList<HashMap<String, String>> filesFromInternalStorage = getPlayList(Environment.getExternalStorageDirectory().getAbsolutePath());
-        for (HashMap<String, String> song : filesFromInternalStorage) {
-            songList.add(song);
+
+        // Getting MP3 files from both internal and external Storage /
+        ArrayList<SongModel> songModelArrayList = readSongs("/storage/");
+        ArrayList<SongModel> songModelArrayListFROM_INTERNAL = readSongs(Environment.getExternalStorageDirectory().getAbsolutePath());
+        ArrayList<String> songNames = new ArrayList<>();
+        ArrayList<String> songArtists = new ArrayList<>();
+
+        for (SongModel song : songModelArrayListFROM_INTERNAL) {
+            songModelArrayList.add(song);
         }
+
+        for (SongModel song : songModelArrayList){
+            songNames.add(song.getTitle());
+            songArtists.add(song.getArtist());
+        }
+
+        // Put SongModel object's Array into SharedPreferences
+
+
+
+
+        // --------------------------------------------------------------- /
         /////////////////////////////////////////////////////////////////////
 
-        // Creating list for mp3 file paths
-        ArrayList<String> songNames = new ArrayList<>();
-        ArrayList<String> artist_list = new ArrayList<>();
-        if (songList != null) {
-            for (int i = 0; i < songList.size(); i++) {
-                // Getting the File path for song from Hashmap
-                String filePath = songList.get(i).get("file_path");
-                // Creating MediaMetadataRetriever instance in order to access Title and Artist
-                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                mediaMetadataRetriever.setDataSource(filePath);
-                String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                String song_name = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-
-                // adding resources to Lists.
-                songNames.add(song_name);
-                if (artist == "" || artist == " " || artist == null || artist == "<Unknown>") {
-                    artist_list.add("Unkown Artist");
-                } else {
-                    artist_list.add(artist);
-                }
-            }
-        }
+//        // Creating list for mp3 file paths
+//        ArrayList<String> songNames = new ArrayList<>();
+//        ArrayList<String> artist_list = new ArrayList<>();
+//        if (songList != null) {
+//            for (int i = 0; i < songList.size(); i++) {
+//                // Getting the File path for song from Hashmap
+//                String filePath = songList.get(i).get("file_path");
+//                // Creating MediaMetadataRetriever instance in order to access Title and Artist
+//                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+//                mediaMetadataRetriever.setDataSource(filePath);
+//                String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+//                String song_name = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+//
+//                // adding resources to Lists.
+//                songNames.add(song_name);
+//                if (artist == "" || artist == " " || artist == null || artist == "<Unknown>") {
+//                    artist_list.add("Unkown Artist");
+//                } else {
+//                    artist_list.add(artist);
+//                }
+//            }
+//        }
 
         ///////////// Recyvler View ///////////////
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        songAdapter = new SongAdapter(this, songNames, artist_list, new onSongItemClickListener() {
+        songAdapter = new SongAdapter(this, songNames, songModelArrayList, new onSongItemClickListener() {
             @Override
             public void onItemClickListener(int position) {
-                passSongToIntent(position, songList);
+                passSongToIntent(position);
+                saveData(songModelArrayList);
             }
         });
         recyclerView.setAdapter(songAdapter);
         ///////////////////////////////////////////
 
+    }
+
+    public void saveData(ArrayList<SongModel> songModelArrayList){
+        SharedPreferences sharedPreferences = getSharedPreferences("Shared Preferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(songModelArrayList);
+        editor.putString("SongList", json).apply();
     }
 
     void checkStoragePermission() {
@@ -104,17 +132,16 @@ public class Main2Activity extends AppCompatActivity {
     }
 
 
-    void passSongToIntent(int position, ArrayList<HashMap<String, String>> songList) {
+    void passSongToIntent(int position) {
 
         Intent goToSongActivity = new Intent(getApplicationContext(), MainActivity.class)
-                .putExtra("position", position)
-                .putExtra("songList", songList);
+                .putExtra("position", position);
         startActivity(goToSongActivity);
     }
 
 
-    ArrayList<HashMap<String, String>> getPlayList(String rootPath) {
-        ArrayList<HashMap<String, String>> fileList = new ArrayList<>();
+    ArrayList<String> getPlayList(String rootPath) {
+        ArrayList<String> fileList = new ArrayList<>();
 
 
         try {
@@ -128,16 +155,30 @@ public class Main2Activity extends AppCompatActivity {
                         break;
                     }
                 } else if (file.getPath().endsWith(".mp3")) {
-                    HashMap<String, String> song = new HashMap<>();
-                    song.put("file_path", file.getAbsolutePath());
-                    song.put("file_name", file.getName());
-                    fileList.add(song);
+//                    HashMap<String, String> song = new HashMap<>();
+//                    song.put("file_path", file.getAbsolutePath());
+//                    song.put("file_name", file.getName());
+//                    fileList.add(song);
+                    fileList.add(file.getAbsolutePath());
                 }
             }
             return fileList;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public ArrayList<SongModel> readSongs(String rootPath) {
+        ArrayList<String> songPathList = getPlayList(rootPath);
+        ArrayList<SongModel> songList = new ArrayList<>();
+
+        for (String path : songPathList){
+            SongModel song = new SongModel(path);
+            song.setFAVOURITE_KEY(false);
+            songList.add(song);
+        }
+
+        return songList;
     }
 
 }

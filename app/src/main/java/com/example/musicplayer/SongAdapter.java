@@ -18,14 +18,14 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
 
     private LayoutInflater layoutInflater;
     private ArrayList<String> song_list;
-    private ArrayList<String> artist_list;
+    private ArrayList<SongModel> songModelArrayList;
     private String songPosition;
     public onSongItemClickListener onSongItemClickListener;
 
-    SongAdapter(Context context, ArrayList<String> song_list, ArrayList<String> artist_list, onSongItemClickListener onSongItemClickListener){
+    SongAdapter(Context context, ArrayList<String> song_list, ArrayList<SongModel> songModelArrayList, onSongItemClickListener onSongItemClickListener){
         this.layoutInflater = LayoutInflater.from(context);
         this.song_list = song_list;
-        this.artist_list = artist_list;
+        this.songModelArrayList = songModelArrayList;
         this.onSongItemClickListener = onSongItemClickListener;
     }
 
@@ -42,11 +42,11 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull SongAdapter.ViewHolder holder, int position) {
 
         String song_name = song_list.get(position);
-        String song_artist = artist_list.get(position);
+        String song_artist = songModelArrayList.get(position).getArtist();
         String songPosition = Integer.toString(position + 1);
 
         holder.song_name.setText(song_name);
-        holder.song_artist.setText(artist_list.get(position));
+        holder.song_artist.setText(song_artist);
         holder.songPosition.setText(songPosition);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
