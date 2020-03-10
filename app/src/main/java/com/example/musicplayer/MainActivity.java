@@ -119,10 +119,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Customize the SnackBar for Later Use
         Snackbar snackbar = Snackbar.make(parent, "", Snackbar.LENGTH_LONG);
         View snackBarView = snackbar.getView();
-        snackBarView.setBackgroundColor(Color.RED);
 
         // Getting and Setting the Vibrant Color
-        setVibrantColorOnViews(albumArt);
+        setVibrantColorOnViews(albumArt, snackBarView);
 
 
         favourite.setOnClickListener(new View.OnClickListener() {
@@ -162,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private void setVibrantColorOnViews(Bitmap albumArt) {
+    private void setVibrantColorOnViews(Bitmap albumArt, View snackbar) {
         Palette.from(albumArt).generate(new Palette.PaletteAsyncListener() {
             @Override
             public void onGenerated(@Nullable Palette palette) {
@@ -171,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 play_button_background.getBackground().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
                 seekBar.getProgressDrawable().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
                 seekBar.getThumb().setColorFilter(Color.parseColor("#" + Integer.toHexString(vibrantSwatch)), PorterDuff.Mode.SRC_IN);
-
+                snackbar.setBackgroundColor(vibrantSwatch);
             }
         });
     }
