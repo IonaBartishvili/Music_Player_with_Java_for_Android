@@ -1,5 +1,6 @@
 package com.example.musicplayer;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -20,12 +21,14 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,6 +38,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Timer;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -63,14 +67,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private LinearLayout play_button_background;
     private Button favourite;
     private ConstraintLayout parent;
+    private Button shuffle;
+    private TextView shuffleIsOn;
+    private BottomNavigationView bottomNavigationView;
 
+    // Variables for SHUFFLE feature
     private boolean SHUFFLE = false;
+    private int positionTemp;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ArrayList<SongModel> songModelArrayList = retrieveDataFromSharedPreferences();
         setContentView(R.layout.activity_main);
+
+        // Initilize and Assign Variable
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+
+        // Set Home Selected
+        bottomNavigationView.setSelectedItemId(R.id.player);
+
+        // Perform ItemSelectedListener
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()){
+                    case R.id.home:
+                        startActivity(new Intent(getApplicationContext(), Main2Activity.class));
+                        overridePendingTransition(0,0);
+                        return true;
+                    case R.id.player:
+                        return true;
+
+                }
+                return false;
+            }
+        });
 
 
         // IDs
@@ -86,16 +119,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         play_button_background = findViewById(R.id.play_button_background);
         favourite = findViewById(R.id.favourite);
         parent = findViewById(R.id.parent);
+        shuffle = findViewById(R.id.shuffle);
+        shuffleIsOn = findViewById(R.id.shuffleIsOn);
 
-
-        // Geting position from Intent
-        Bundle bundle = getIntent().getExtras();
-        position = bundle.getInt("position");
-
-        // ----------------------------------------------- //\
-        ArrayList<SongModel> songModelArrayList = retrieveDataFromSharedPreferences();
 
         // Running Entire Music player Logic. Giving the Song list and the position of the song
+
         initMusicPlayer(position, songModelArrayList);
 
         // Play and Pause Click Listener
@@ -144,6 +173,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        shuffle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!SHUFFLE){
+                    SHUFFLE = true;
+                    shuffle.getBackground().setColorFilter(Color.parseColor("#ec1b23"), PorterDuff.Mode.SRC_IN);
+//                    snackBarView.setBackgroundColor(R.color.dominantColor);
+                    snackbar.setText("Shuffle is On").show();
+                } else {
+//                    snackBarView.setBackgroundColor(R.color.dominantColor);
+                    snackbar.setText("Shuffle is OFF").show();
+                    SHUFFLE = false;
+                    shuffle.getBackground().setColorFilter(Color.parseColor("#707070"), PorterDuff.Mode.SRC_IN);
+                }
+            }
+        });
+
 
         // Converting Path to URI
         Uri uri = Uri.parse(path);
@@ -185,16 +231,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     void playNextTrack(ArrayList<SongModel> songList) {
+
+
+
         play_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (position < songList.size() - 1) {
-                    position++;
-                } else {
-                    position = 1;
-                }
+                positionTemp = position;
+                if (SHUFFLE){
 
-                initMusicPlayer(position, songList);
+                    if (position < songList.size() - 1) {
+                        Random random = new Random();
+                        position = random.nextInt(songList.size() - 1);
+                    } else {
+                        position = 1;
+                    }
+
+                    initMusicPlayer(position, songList);
+
+                } else {
+                    if (position < songList.size() - 1) {
+                        position++;
+                    } else {
+                        position = 1;
+                    }
+
+                    initMusicPlayer(position, songList);
+                }
             }
         });
     }
@@ -203,10 +266,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         play_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (position <= 0) {
-                    position = songList.size();
+                if (SHUFFLE){
+                    position = positionTemp;
                 } else {
-                    position--;
+                    if (position <= 0) {
+                        position = songList.size();
+                    } else {
+                        position--;
+                    }
                 }
 
                 initMusicPlayer(position, songList);
@@ -239,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         notificationManager = NotificationManagerCompat.from(this);
 
         Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.album_cover)
@@ -330,6 +397,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String json = sharedPreferences.getString("SongList", null);
         Type type = new TypeToken<ArrayList<SongModel>>(){}.getType();
         ArrayList<SongModel> songList = gson.fromJson(json, type);
+        position = sharedPreferences.getInt("position", 3);
         return songList;
 
     }

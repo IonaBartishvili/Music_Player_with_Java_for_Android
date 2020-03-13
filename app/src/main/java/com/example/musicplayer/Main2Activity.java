@@ -1,5 +1,6 @@
 package com.example.musicplayer;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -28,6 +30,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -36,19 +39,37 @@ import java.util.HashMap;
 
 public class Main2Activity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 1;
-    private RecyclerView recyclerView;
-    private SongAdapter songAdapter;
-    private static final int MY_PERMISSION_REQUEST = 1;
-    private TextView textView3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
+        // Initialize and Assign Variable
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+
+        // Set Home Selected
+        bottomNavigationView.setSelectedItemId(R.id.home);
+
+        // Perform ItemSelectedListener
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()){
+                    case R.id.home:
+                        return true;
+                    case R.id.player:
+                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                        overridePendingTransition(0,0);
+                        return true;
+
+                }
+                return false;
+            }
+        });
+
         // Declaring IDs
-        recyclerView = findViewById(R.id.recyclerView);
-        textView3 = findViewById(R.id.textView3);
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
         // Asking || Checking the Storage Permission
         checkStoragePermission();
@@ -58,15 +79,13 @@ public class Main2Activity extends AppCompatActivity {
         ArrayList<SongModel> songModelArrayList = readSongs("/storage/");
         ArrayList<SongModel> songModelArrayListFROM_INTERNAL = readSongs(Environment.getExternalStorageDirectory().getAbsolutePath());
         ArrayList<String> songNames = new ArrayList<>();
-        ArrayList<String> songArtists = new ArrayList<>();
+//        ArrayList<String> songArtists = new ArrayList<>();
 
-        for (SongModel song : songModelArrayListFROM_INTERNAL) {
-            songModelArrayList.add(song);
-        }
+        songModelArrayList.addAll(songModelArrayListFROM_INTERNAL);
 
         for (SongModel song : songModelArrayList){
             songNames.add(song.getTitle());
-            songArtists.add(song.getArtist());
+//            songArtists.add(song.getArtist());
         }
 
         // Put SongModel object's Array into SharedPreferences
@@ -77,36 +96,14 @@ public class Main2Activity extends AppCompatActivity {
         // --------------------------------------------------------------- /
         /////////////////////////////////////////////////////////////////////
 
-//        // Creating list for mp3 file paths
-//        ArrayList<String> songNames = new ArrayList<>();
-//        ArrayList<String> artist_list = new ArrayList<>();
-//        if (songList != null) {
-//            for (int i = 0; i < songList.size(); i++) {
-//                // Getting the File path for song from Hashmap
-//                String filePath = songList.get(i).get("file_path");
-//                // Creating MediaMetadataRetriever instance in order to access Title and Artist
-//                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-//                mediaMetadataRetriever.setDataSource(filePath);
-//                String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-//                String song_name = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-//
-//                // adding resources to Lists.
-//                songNames.add(song_name);
-//                if (artist == "" || artist == " " || artist == null || artist == "<Unknown>") {
-//                    artist_list.add("Unkown Artist");
-//                } else {
-//                    artist_list.add(artist);
-//                }
-//            }
-//        }
 
         ///////////// Recyvler View ///////////////
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        songAdapter = new SongAdapter(this, songNames, songModelArrayList, new onSongItemClickListener() {
+        SongAdapter songAdapter = new SongAdapter(this, songNames, songModelArrayList, new onSongItemClickListener() {
             @Override
             public void onItemClickListener(int position) {
-                passSongToIntent(position);
-                saveData(songModelArrayList);
+                passSongToIntent();
+                saveData(songModelArrayList, position);
             }
         });
         recyclerView.setAdapter(songAdapter);
@@ -114,12 +111,20 @@ public class Main2Activity extends AppCompatActivity {
 
     }
 
-    public void saveData(ArrayList<SongModel> songModelArrayList){
+    void passSongToIntent() {
+
+        Intent goToSongActivity = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(goToSongActivity);
+    }
+
+    public void saveData(ArrayList<SongModel> songModelArrayList, int position){
         SharedPreferences sharedPreferences = getSharedPreferences("Shared Preferences", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
         String json = gson.toJson(songModelArrayList);
-        editor.putString("SongList", json).apply();
+        editor.putString("SongList", json);
+        editor.putInt("position", position);
+        editor.apply();
     }
 
 //    void checkStoragePermission() {
@@ -181,13 +186,6 @@ public class Main2Activity extends AppCompatActivity {
         }
     }
 
-
-    void passSongToIntent(int position) {
-
-        Intent goToSongActivity = new Intent(getApplicationContext(), MainActivity.class)
-                .putExtra("position", position);
-        startActivity(goToSongActivity);
-    }
 
 
     ArrayList<String> getPlayList(String rootPath) {

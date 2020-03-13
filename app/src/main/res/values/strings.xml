@@ -4,4 +4,8 @@
     <string name="artist_Name">SBTRKT</string>
     <string name="song_Name">Everybody knows</string>
     <string name="your_playlist">Your playlist</string>
+    <string name="home">home</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
